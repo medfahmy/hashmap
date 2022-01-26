@@ -1,4 +1,9 @@
+#![feature(test)]
+
 use std::fmt::Debug;
+use std::cmp::PartialEq;
+use rand::distributions::{Distribution ,Uniform};
+
 
 trait Hashable {
     fn hash(&self) -> usize;
@@ -11,6 +16,15 @@ impl Hashable for String {
             result = ((result << 5).wrapping_add(result)).wrapping_add(c.into());
         }
         result
+    }
+}
+
+impl Hashable for usize {
+    fn hash(&self) -> usize {
+        // let mut result: usize = 5381;
+        // result = ((result << 5).wrapping_add(result)).wrapping_add(*self);
+        // result
+        *self
     }
 }
 
@@ -51,7 +65,15 @@ where
         }
     }
 
-    fn debug_dump(&self) {
+    fn debug(&self) {
+        // &self.cells.into_iter().map(|cell| -> String {
+        //     if cell.taken {
+        //         format!("{:?} -> {:?}", cell.key, cell.value)
+        //     } else {
+        //         format!("x")
+        //     }
+        // } ).collect::<String>()
+
         for cell in &self.cells {
             if cell.taken {
                 println!("{:?} -> {:?}", cell.key, cell.value);
@@ -87,7 +109,7 @@ where
     fn extend(&mut self) {
         assert!(self.cells.len() != 0);
         let mut new_self = Self {
-            cells: vec![HashCell::<_, _>::default(); self.cells.len() * 2],
+            cells: vec![HashCell::<_, _>::default(); self.cells.len() * 2 + 1],
             taken_count: 0,
         };
 
@@ -142,37 +164,45 @@ where
     }
 }
 
-fn main() {
-    let mut phone_book = HashMap::<String, String>::new();
-    for i in 0..11 {
-        phone_book.insert(format!("{}", i), format!("{}", 1_000_000 + i));
+fn load_hash_map() {
+    let mut map = HashMap::<usize, usize>::new();
+    for _ in 0..1000 {
+        let key = rand::random::<usize>();
+        if let Some(value) = map.get_mut(&key) {
+            *value += 1;
+        } else {
+            map.insert(key, 1);
+        }
     }
-    phone_book.debug_dump();
-
-    println!("--------------");
-    phone_book.insert(format!("{}", 12), format!("{}", 1_000_000 + 12));
-    phone_book.debug_dump();
-
-    println!("--------------");
-    for i in 0..11 {
-        let key = format!("{}", i);
-        let value = phone_book.get(&key).unwrap();
-        println!("{} -> {}", key, value);
-    }
-
-    //     phone_book.insert("med fahmy".to_string(), "0652610981".to_string());
-    //     phone_book.insert("john doe".to_string(), "7510000".to_string());
-    //     phone_book.debug_dump();
-    //
-    //     let error_msg = String::from("no such key");
-    //     let not_key = String::from("med fa");
-    //     let key = String::from("med fahmy");
-    //     let john_key = String::from("john doe");
-    //
-    //     println!("{}", phone_book.get(&not_key).unwrap_or_else(|| &error_msg));
-    //     println!("{}", phone_book.get(&key).unwrap_or_else(|| &error_msg));
-    //
-    //     println!("{:?}", phone_book.get(&not_key));
-    //     println!("{:?}", phone_book.get(&key));
-    //     println!("{:?}", phone_book.get(&john_key));
 }
+
+fn main() {
+    let mut map = HashMap::<usize, usize>::new();
+    for _ in 0..1000 {
+        let key = rand::random::<usize>();
+        if let Some(value) = map.get_mut(&key) {
+            *value += 1;
+        } else {
+            map.insert(key, 1);
+        }
+    }
+    map.debug();
+}
+
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+// fn fibonacci(n: u64) -> u64 {
+//     match n {
+//         0 => 1,
+//         1 => 1,
+//         n => fibonacci(n-1) + fibonacci(n-2),
+//     }
+// }
+
+fn criterion_benchmark(c: &mut Criterion) {
+    // c.bench_function("fib 20", |b| b.iter(|| fibonacci(black_box(20))));
+    c.bench_function("map", |b| b.iter(|| load_hash_map()));
+}
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);
