@@ -2,7 +2,7 @@
 
 use std::fmt::Debug;
 use std::cmp::PartialEq;
-use rand::distributions::{Distribution ,Uniform};
+use rand::distributions::{Distribution, Uniform};
 
 
 trait Hashable {
